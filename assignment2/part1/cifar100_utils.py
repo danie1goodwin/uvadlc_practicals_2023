@@ -40,6 +40,7 @@ class AddGaussianNoise(torch.nn.Module):
 
         z = torch.randn(img.shape())
         z = self.mean + self.std*z
+
         img = img + z
         #######################
         # END OF YOUR CODE    #
@@ -59,10 +60,11 @@ def add_augmentation(augmentation_name, transform_list):
     #######################
 
     # Create a new transformation based on the augmentation_name.
-    new_transform = transforms.augmentation_name
+    augmentation_function = getattr(transforms, augmentation_name)
+
 
     # Add the new transformation to the list.
-    transform_list.append(new_transform)
+    transform_list.append(augmentation_function())
 
     #######################
     # END OF YOUR CODE    #

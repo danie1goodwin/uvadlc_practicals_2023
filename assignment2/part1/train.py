@@ -162,8 +162,7 @@ def evaluate_model(model, data_loader, device):
             # Determine prediction of model on dev set
             data_inputs, data_labels = data_inputs.to(device), data_labels.to(device)
             preds = model(data_inputs)
-            preds_softmax = F.softmax(preds, dim=1)
-            _, pred_labels = torch.max(preds_softmax, 1)
+            _, pred_labels = torch.max(preds, 1)
             true_preds += (pred_labels == data_labels).sum().item()
             num_preds += data_labels.shape[0]
 
@@ -229,13 +228,13 @@ if __name__ == '__main__':
                         help='Learning rate to use')
     parser.add_argument('--batch_size', default=256, type=int,
                         help='Minibatch size')
-    parser.add_argument('--epochs', default=30, type=int,
+    parser.add_argument('--epochs', default=15, type=int,
                         help='Max number of epochs')
     parser.add_argument('--seed', default=123, type=int,
                         help='Seed to use for reproducing results')
     parser.add_argument('--data_dir', default='data/', type=str,
                         help='Data directory where to store/find the CIFAR100 dataset.')
-    parser.add_argument('--augmentation_name', default=None, type=str,
+    parser.add_argument('--augmentation_name', default='RandomGrayscale', type=str,
                         help='Augmentation to use.')
     parser.add_argument('--test_noise', default=False, action="store_true",
                         help='Whether to test the model on noisy images or not.')
