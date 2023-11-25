@@ -122,7 +122,8 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
         torch.cuda.empty_cache()
         
         if epoch == 0 or val_accuracies[epoch] > max(val_accuracies):
-            bestmodel = deepcopy(model)
+            bestmodel = model
+            torch.save(bestmodel.state_dict(), 'models/ptresnet.pt') 
 
     # Load the best model on val accuracy and return it.
     model = bestmodel
@@ -234,7 +235,7 @@ if __name__ == '__main__':
                         help='Seed to use for reproducing results')
     parser.add_argument('--data_dir', default='data/', type=str,
                         help='Data directory where to store/find the CIFAR100 dataset.')
-    parser.add_argument('--augmentation_name', default='RandomGrayscale', type=str,
+    parser.add_argument('--augmentation_name', default=None, type=str,
                         help='Augmentation to use.')
     parser.add_argument('--test_noise', default=False, action="store_true",
                         help='Whether to test the model on noisy images or not.')

@@ -39,7 +39,7 @@ def parse_option():
 
     parser.add_argument("--seed", type=int, default=42, help="random seed")
 
-    parser.add_argument("--batch_size", type=int, default=32, help="batch_size")
+    parser.add_argument("--batch_size", type=int, default=128, help="batch_size")
     parser.add_argument(
         "--num_workers", type=int, default=16, help="num of workers to use"
     )
@@ -55,14 +55,14 @@ def parse_option():
     parser.add_argument(
         "--dataset",
         type=str,
-        default="cifar10",
+        default="cifar100",
         help="dataset",
         choices=["cifar10", "cifar100"],
     )
     parser.add_argument(
         "--split",
         type=str,
-        default="train",
+        default="test",
         help="dataset splits: (train/test)",
         choices=["train", "test"],
     )
@@ -75,13 +75,13 @@ def parse_option():
 
     # input
     parser.add_argument(
-        "--prompt_template", type=str, default="This is a photo of a {}"
+        "--prompt_template", type=str, default="This is a photo of a mostly {} object"
     )
     parser.add_argument(
         "--class_names",
         nargs="+",
         type=str,
-        default=None,
+        default=['red', 'green', 'blue'],  
         help="(space separated) labels to use for the prompts; defaults to all classes in the dataset",
         # e.g. --class_names red blue green
     )
@@ -89,14 +89,13 @@ def parse_option():
     # visualization
     parser.add_argument(
         "--visualize_predictions",
-        default=False,
+        default=True,
         action="store_true",
         help="whether to visualize the predictions of the first batch",
     )
 
     args = parser.parse_args()
-    args.device = "cuda" if torch.cuda.is_available() else "cpu"
-
+    args.device = "mps" if torch.backends.mps.is_available() else "cpu"
     return args
 
 
@@ -170,9 +169,14 @@ class ZeroshotCLIP(nn.Module):
         # - Read the CLIP API documentation for more details:
         #   https://github.com/openai/CLIP#api
 
-        # remove this line once you implement the function
-        raise NotImplementedError("Implement the precompute_text_features function.")
+        text_inputs = torch.cat([clip.tokenize(prompt) for prompt in prompts])
+        text_inputs = text_inputs.to(device)
 
+        with torch.no_grad():
+            text_features = clip_model.encode_text(text_inputs)
+
+        text_features /= text_features.norm(dim=-1, keepdim=True)
+        return text_features
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -209,9 +213,14 @@ class ZeroshotCLIP(nn.Module):
         # - Read the CLIP API documentation for more details:
         #   https://github.com/openai/CLIP#api
 
-        # remove this line once you implement the function
-        raise NotImplementedError("Implement the model_inference function.")
+        image = image.to(self.device)
 
+        with torch.no_grad():
+            image_features = self.clip_model.encode_image(image)
+        image_features /= image_features.norm(dim=-1, keepdim=True) 
+        similarity = image_features @ self.text_features.T
+
+        return similarity*self.logit_scale
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -319,7 +328,8 @@ def main():
     set_seed(args.seed)
 
     # Part 0.1: set number of workers to max the number of CPU cores
-    args.num_workers = min(args.num_workers, os.cpu_count())
+    #args.num_workers = min(args.num_workers, os.cpu_count())
+    args.num_workers = 0 
 
     # Part 1. Load dataset and create dataloader
     _, preprocess = clip.load(args.arch)
@@ -328,7 +338,7 @@ def main():
     loader = DataLoader(
         dataset=dataset, batch_size=args.batch_size, num_workers=args.num_workers
     )
-
+    
     # Part 2. Initialize the inference class: ZeroshotCLIP
     print("Using prompt template:", args.prompt_template)
     clipzs = ZeroshotCLIP(args=args, dataset=dataset, template=args.prompt_template)
@@ -372,8 +382,12 @@ def main():
     # - You can use the model_inference method of the ZeroshotCLIP class to get the logits
 
     # you can remove the following line once you have implemented the inference loop
-    raise NotImplementedError("Implement the inference loop")
-
+    for image, label in loader:
+        label = label.to(device) 
+        _, top_label = clipzs.model_inference(image).topk(1,dim=-1)
+        correct = torch.sum(top_label.squeeze() == label).item()
+        accuracy = correct/args.batch_size 
+        top1.update(accuracy, args.batch_size) 
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -382,6 +396,9 @@ def main():
         f"Zero-shot CLIP top-1 accuracy on {args.dataset}/{args.split}: {top1.avg*100}"
     )
 
+    # with open('results.txt', 'a') as file:
+    #     # Write the accuracy
+    #     file.write(f"Zero-shot CLIP top-1 accuracy on {args.dataset}/{args.split}: {top1.avg*100}")
 
 if __name__ == "__main__":
     main()
