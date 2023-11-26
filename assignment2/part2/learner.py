@@ -19,10 +19,11 @@ import os
 from pprint import pprint
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 import random
 from clip import clip
-from torch.cuda.amp import GradScaler
+#from torch.cuda.amp import GradScaler
 import time
 
 
@@ -73,7 +74,12 @@ class Learner:
         # Note: You need to keep the visual/deep prompt's parameters trainable
         # Hint: Check for "prompt_learner" and "deep_prompt" in the parameters' names
 
-        raise NotImplementedError
+        trainables = ['prompt_learner', 'deep_prompt']
+        for name, param in self.clip.named_parameters():
+            name = name.split('.')[0]
+            if not name in trainables:
+                param.requires_grad_(False) 
+            
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -101,7 +107,7 @@ class Learner:
         )
 
         self.criterion = nn.CrossEntropyLoss()
-        self.scaler = GradScaler()
+        #self.scaler = GradScaler()
 
         # Define scheduler
         total_steps = len(self.train_loader) * args.epochs
@@ -126,7 +132,10 @@ class Learner:
             if self.args.gpu is not None:
                 # best_acc1 may be from a checkpoint from a different GPU
                 best_acc1 = best_acc1.to(self.args.gpu)
-            self.clip.prompt_learner.load_state_dict(checkpoint["state_dict"])
+            if self.args.prompt_type == 'visual_prompt':
+                self.clip.prompt_learner.load_state_dict(checkpoint["state_dict"])
+            else:
+                self.clip.load_state_dict(checkpoint["state_dict"])
             print(
                 "=> loaded checkpoint '{}' (epoch {})".format(
                     self.args.resume, checkpoint["epoch"]
@@ -226,18 +235,22 @@ class Learner:
             # - Perform a backward pass
             # - Update the parameters
 
-            raise NotImplementedError
+            self.optimizer.zero_grad()
+            images, target = images.to(self.device), target.to(self.device).float()
+            target.requires_grad = True
+            similarities = self.clip.forward(images) 
+            _, predictions = similarities.topk(1,dim=-1)
+            predictions = predictions.float()
+            predictions.requires_grad = True
+            loss = self.criterion(predictions, target)  
+            loss.backward()
+            self.optimizer.step() 
             #######################
             # END OF YOUR CODE    #
             #######################
 
-            # Note: we clamp to 4.6052 = ln(100), as in the original paper.
-            self.clip.logit_scale.data = torch.clamp(
-                self.clip.logit_scale.data, 0, 4.6052
-            )
-
             # Measure accuracy
-            acc1 = accuracy(output, target, topk=(1,))
+            acc1 = accuracy(predictions, target)
             losses.update(loss.item(), images.size(0))
             top1.update(acc1[0].item(), images.size(0))
 
@@ -290,14 +303,17 @@ class Learner:
                 # - Move the images/targets to the device
                 # - Forward pass (using self.clip)
                 # - Compute the loss (using self.criterion)
-
-                raise NotImplementedError
+                images, target = images.to(self.device), target.to(self.device)
+                similarities = self.clip.forward(images) 
+                _, predictions = similarities.topk(1,dim=-1)
+                predictions = predictions.float()
+                loss = self.criterion(predictions, target) 
                 #######################
                 # END OF YOUR CODE    #
                 #######################
 
                 # Measure accuracy and record loss
-                acc1 = accuracy(output, target, topk=(1,))
+                acc1 = accuracy(predictions, target, topk=(1,))
                 losses.update(loss.item(), images.size(0))
                 top1_prompt.update(acc1[0].item(), images.size(0))
 

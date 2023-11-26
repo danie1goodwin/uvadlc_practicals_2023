@@ -24,14 +24,14 @@ from learner import Learner
 def parse_option():
     parser = argparse.ArgumentParser("Visual Prompting for CLIP")
 
-    parser.add_argument("--print_freq", type=int, default=10, help="print frequency")
-    parser.add_argument("--save_freq", type=int, default=50, help="save frequency")
-    parser.add_argument("--batch_size", type=int, default=128, help="batch_size")
+    parser.add_argument("--print_freq", type=int, default=50, help="print frequency")
+    parser.add_argument("--save_freq", type=int, default=200, help="save frequency")
+    parser.add_argument("--batch_size", type=int, default=256, help="batch_size")
     parser.add_argument(
-        "--num_workers", type=int, default=16, help="num of workers to use"
+        "--num_workers", type=int, default=0, help="num of workers to use"
     )
     parser.add_argument(
-        "--epochs", type=int, default=1000, help="number of training epochs"
+        "--epochs", type=int, default=100, help="number of training epochs"
     )
     parser.add_argument(
         "--square_size",
@@ -47,7 +47,7 @@ def parse_option():
         "--warmup", type=int, default=1000, help="number of steps to warmup for"
     )
     parser.add_argument("--momentum", type=float, default=0.9, help="momentum")
-    parser.add_argument("--patience", type=int, default=1000)
+    parser.add_argument("--patience", type=int, default=10)
 
     # model
     parser.add_argument("--model", type=str, default="clip")
@@ -58,7 +58,7 @@ def parse_option():
     parser.add_argument(
         "--method",
         type=str,
-        default="padding",
+        default="fixed_patch",
         choices=[
             "padding",
             "random_patch",
@@ -67,7 +67,7 @@ def parse_option():
         help="choose visual prompting method",
     )
     parser.add_argument(
-        "--prompt_size", type=int, default=30, help="size for visual prompts"
+        "--prompt_size", type=int, default=1, help="size for visual prompts"
     )
     parser.add_argument(
         "--text_prompt_template", type=str, default="This is a photo of a {}",
@@ -112,7 +112,7 @@ def parse_option():
 
     args = parser.parse_args()
 
-    args.num_workers = min(args.num_workers, os.cpu_count())
+    #args.num_workers = min(args.num_workers, os.cpu_count())
 
     args.filename = "{}_{}_{}_{}_{}_{}_lr_{}_decay_{}_bsz_{}_warmup_{}_trial_{}".format(
         args.method,
@@ -128,7 +128,7 @@ def parse_option():
         args.trial,
     )
 
-    args.device = "cuda" if torch.cuda.is_available() else "cpu"
+    args.device = "mps" if torch.backends.mps.is_available() else "cpu"
     args.model_folder = os.path.join(args.model_dir, args.filename)
     if not os.path.isdir(args.model_folder):
         os.makedirs(args.model_folder)

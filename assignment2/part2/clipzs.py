@@ -55,14 +55,14 @@ def parse_option():
     parser.add_argument(
         "--dataset",
         type=str,
-        default="cifar100",
+        default="cifar10",
         help="dataset",
         choices=["cifar10", "cifar100"],
     )
     parser.add_argument(
         "--split",
         type=str,
-        default="test",
+        default="train",
         help="dataset splits: (train/test)",
         choices=["train", "test"],
     )
@@ -75,13 +75,13 @@ def parse_option():
 
     # input
     parser.add_argument(
-        "--prompt_template", type=str, default="This is a photo of a mostly {} object"
+        "--prompt_template", type=str, default="This is a photo of a {}"
     )
     parser.add_argument(
         "--class_names",
         nargs="+",
         type=str,
-        default=['red', 'green', 'blue'],  
+        default=None,  
         help="(space separated) labels to use for the prompts; defaults to all classes in the dataset",
         # e.g. --class_names red blue green
     )
@@ -89,7 +89,7 @@ def parse_option():
     # visualization
     parser.add_argument(
         "--visualize_predictions",
-        default=True,
+        default=False,
         action="store_true",
         help="whether to visualize the predictions of the first batch",
     )
