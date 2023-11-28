@@ -123,12 +123,12 @@ class VisualPromptCLIP(nn.Module):
         # - Return logits of shape (batch size, number of classes).
 
         # remove this line once you implement the function
-        image_w_prompt = self.prompt_learner.forward(image)
+        image_w_prompt = self.prompt_learner(image)
         image_features = self.clip_model.encode_image(image_w_prompt)
         image_features = image_features / image_features.norm(dim=-1, keepdim=True) 
         similarity = image_features @ self.text_features.T 
         similarity = similarity * self.logit_scale 
-        return similarity 
+        return similarity
         #######################
         # END OF YOUR CODE    #
         #######################

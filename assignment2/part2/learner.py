@@ -79,7 +79,6 @@ class Learner:
             name = name.split('.')[0]
             if not name in trainables:
                 param.requires_grad_(False) 
-            
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -91,12 +90,12 @@ class Learner:
                 enabled.add(name)
         print(f"Parameters to be updated:")
         pprint(f"Parameters to be updated: {enabled}")
-
         # Print number of parameters
         num_params = sum(p.numel() for p in self.clip.parameters() if p.requires_grad)
         print("Number of prompt parameters: ", num_params)
 
         self.clip.to(self.device)
+
 
         # Define criterion and optimizer
         self.optimizer = torch.optim.SGD(
@@ -234,23 +233,18 @@ class Learner:
             # - Compute the loss (using self.criterion)
             # - Perform a backward pass
             # - Update the parameters
-
-            self.optimizer.zero_grad()
             images, target = images.to(self.device), target.to(self.device).float()
-            target.requires_grad = True
-            similarities = self.clip.forward(images) 
-            _, predictions = similarities.topk(1,dim=-1)
-            predictions = predictions.float()
-            predictions.requires_grad = True
-            loss = self.criterion(predictions, target)  
-            loss.backward()
-            self.optimizer.step() 
+            self.optimizer.zero_grad()
+            similarities = self.clip(images).float()
+            loss = self.criterion(similarities, target) 
+            loss.backward()            
+            self.optimizer.step()
             #######################
             # END OF YOUR CODE    #
             #######################
 
             # Measure accuracy
-            acc1 = accuracy(predictions, target)
+            acc1 = accuracy(similarities, target, topk=(1,))
             losses.update(loss.item(), images.size(0))
             top1.update(acc1[0].item(), images.size(0))
 
@@ -303,17 +297,15 @@ class Learner:
                 # - Move the images/targets to the device
                 # - Forward pass (using self.clip)
                 # - Compute the loss (using self.criterion)
-                images, target = images.to(self.device), target.to(self.device)
-                similarities = self.clip.forward(images) 
-                _, predictions = similarities.topk(1,dim=-1)
-                predictions = predictions.float()
-                loss = self.criterion(predictions, target) 
+                images, target = images.to(self.device), target.to(self.device).float()
+                similarities = self.clip.forward(images).float()
+                loss = self.criterion(similarities, target) 
                 #######################
                 # END OF YOUR CODE    #
                 #######################
 
                 # Measure accuracy and record loss
-                acc1 = accuracy(predictions, target, topk=(1,))
+                acc1 = accuracy(similarities, target, topk=(1,))
                 losses.update(loss.item(), images.size(0))
                 top1_prompt.update(acc1[0].item(), images.size(0))
 

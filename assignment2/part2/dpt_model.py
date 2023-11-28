@@ -65,8 +65,9 @@ class DeepPromptCLIP(nn.Module):
         # - Return a tensor of shape (num_prompts, 512).
 
         # remove this line once you implement the function
-        raise NotImplementedError("Write the code to compute text features.")
-
+        with torch.no_grad():
+            prompt_features = clip_model.encode_text(prompts) 
+        text_features = prompt_features / prompt_features.norm(dim=-1, keepdim=True)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -85,11 +86,10 @@ class DeepPromptCLIP(nn.Module):
         # Hint: consider the shape required for the deep prompt to be compatible with the CLIP model 
         # Hint: CLIP uses different datatypes for CPU (float32) and GPU (float16)
         # Hint: use args.prompt_num to specify the number of deep prompts to use
-
-        #self.deep_prompt = 
-
+        self.prompt_num = args.prompt_num
+        self.deep_prompt = nn.Parameter(torch.randn([args.prompt_num, self.clip_model.visual.transformer.width], device = args.device, dtype = torch.float16), requires_grad=True)
         # remove this line once you implement the function
-        raise NotImplementedError("Write the code to compute text features.")
+        
 
         #######################
         # END OF YOUR CODE    #
@@ -113,7 +113,11 @@ class DeepPromptCLIP(nn.Module):
         # - Return logits of shape (batch size, number of classes).
 
         # remove this line once you implement the function
-        raise NotImplementedError("Implement the model_inference function.")
+
+        image_features = self.custom_encode_image(image)
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True) 
+        similarity = image_features @ self.text_features.T 
+        return similarity * self.logit_scale
 
         #######################
         # END OF YOUR CODE    #
@@ -150,12 +154,18 @@ class DeepPromptCLIP(nn.Module):
         # Hint: Beware of the batch size (the deep prompt is the same for all images in the batch).
 
         # remove this line once you implement the function
-        raise NotImplementedError("Implement the model_inference function.")
+        deep_prompt = self.deep_prompt.expand(x.shape[0], -1, -1)
+        for i, block in enumerate(image_encoder.transformer.resblocks):
+            if i==self.injection_layer:
+                x = torch.cat((deep_prompt, x), dim=1)
+            x=block(x)
 
-        #######################
-        # END OF YOUR CODE    #
-        #######################
+        x = x[:, self.prompt_num:, :]
 
+        ######################
+        # END OF YOUR CODE   #
+        ######################
+        
         x = x.permute(1, 0, 2)  # LND -> NLD
 
         x = image_encoder.ln_post(x[:, 0, :])
