@@ -2,3 +2,8 @@ Zero-shot CLIP top-1 accuracy on cifar10/train: 88.64090473145781
 Zero-shot CLIP top-1 accuracy on cifar10/test: 87.95490506329115
 Zero-shot CLIP top-1 accuracy on cifar100/train: 63.533008312020456
 Zero-shot CLIP top-1 accuracy on cifar100/test: 62.53955696202531
+
+Fixed patch (prompt=1) top-1 accuracy on cifar10: 88.430
+Padding (prompt=30) top-1 accuracy on cifar10: 
+Fixed patch (prompt=1) top-1 accuracy on cifar100: 
+Padding (prompt=30) top-1 accuracy on cifar100: 
