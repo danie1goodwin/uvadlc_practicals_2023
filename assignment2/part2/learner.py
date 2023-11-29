@@ -234,6 +234,7 @@ class Learner:
             # - Perform a backward pass
             # - Update the parameters
             images, target = images.to(self.device), target.to(self.device).float()
+            self.clip.visualize_prompt('test')
             self.optimizer.zero_grad()
             similarities = self.clip(images).float()
             loss = self.criterion(similarities, target) 

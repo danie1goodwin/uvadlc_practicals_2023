@@ -45,8 +45,9 @@ class FixedPatchPrompter(nn.Module):
         #     (3 for the RGB channels)
         # - You can define variable parameters using torch.nn.Parameter
         # - You can initialize the patch randomly in N(0, 1) using torch.randn
+        self.device = args.device 
         self.prompt_size = args.prompt_size
-        self.patch = nn.Parameter(torch.randn((1, 3, self.prompt_size, self.prompt_size), device = 'mps'), requires_grad=True) 
+        self.patch = nn.Parameter(torch.randn((1, 3, self.prompt_size, self.prompt_size), device =  args.device), requires_grad=True) 
         
         #######################
         # END OF YOUR CODE    #
@@ -62,6 +63,7 @@ class FixedPatchPrompter(nn.Module):
         # - First define the prompt. Then add it to the batch of images.
         # - It is always advisable to implement and then visualize if
         #   your prompter does what you expect it to do.
+        x = x.to(self.device)
         prompt = self.patch
         x[: , : , :self.prompt_size, :self.prompt_size] += prompt 
         return x 
@@ -78,7 +80,7 @@ class PadPrompter(nn.Module):
         super(PadPrompter, self).__init__()
         pad_size = args.prompt_size
         image_size = args.image_size
-
+        self.device = args.device
         #######################
         # PUT YOUR CODE HERE  #
         #######################
@@ -92,10 +94,10 @@ class PadPrompter(nn.Module):
         # - See Fig 2.(g)/(h) and think about the shape of self.pad_left and self.pad_right
         self.pad_size = pad_size
         self.image_size = image_size
-        self.pad_up = nn.Parameter(torch.randn((1,3, pad_size, image_size),device = 'mps'), requires_grad=True) 
-        self.pad_down = nn.Parameter(torch.randn((1,3, pad_size, image_size), device = 'mps'), requires_grad=True) 
-        self.pad_left = nn.Parameter(torch.randn((1,3, image_size - 2*pad_size, pad_size), device = 'mps'), requires_grad=True) 
-        self.pad_right = nn.Parameter(torch.randn((1,3, image_size - 2*pad_size, pad_size), device = 'mps'), requires_grad=True) 
+        self.pad_up = nn.Parameter(torch.randn((1,3, pad_size, image_size),device = args.device), requires_grad=True) 
+        self.pad_down = nn.Parameter(torch.randn((1,3, pad_size, image_size), device =  args.device), requires_grad=True) 
+        self.pad_left = nn.Parameter(torch.randn((1,3, image_size - 2*pad_size, pad_size), device =  args.device), requires_grad=True) 
+        self.pad_right = nn.Parameter(torch.randn((1,3, image_size - 2*pad_size, pad_size), device = args.device), requires_grad=True) 
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -111,6 +113,7 @@ class PadPrompter(nn.Module):
         # - It is always advisable to implement and then visualize if
         #   your prompter does what you expect it to do.
 
+        x = x.to(self.device) 
         pad_up = self.pad_up
         pad_down = self.pad_down
         pad_left = self.pad_left

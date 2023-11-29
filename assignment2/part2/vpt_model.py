@@ -83,7 +83,7 @@ class VisualPromptCLIP(nn.Module):
         # - Return a tensor of shape (num_prompts, 512).
 
         text_inputs = torch.cat([clip.tokenize(prompt) for prompt in prompts])
-        text_inputs = text_inputs.to('mps')
+        text_inputs = text_inputs.to(args.device) 
 
         with torch.no_grad():
             text_features = clip_model.encode_text(text_inputs)
