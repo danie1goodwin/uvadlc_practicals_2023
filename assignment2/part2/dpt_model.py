@@ -129,7 +129,7 @@ class DeepPromptCLIP(nn.Module):
 
         x = x.type(self.clip_model.dtype)
         image_encoder = self.clip_model.visual
-        
+        print(image_encoder) 
         x = image_encoder.conv1(x)  # shape = [*, width, grid, grid]
         x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
@@ -157,10 +157,8 @@ class DeepPromptCLIP(nn.Module):
         deep_prompt = self.deep_prompt.expand(x.shape[0], -1, -1)
         for i, block in enumerate(image_encoder.transformer.resblocks):
             if i==self.injection_layer:
-                x = torch.cat((deep_prompt, x), dim=1)
+                x = torch.cat((x, deep_prompt), dim=1)
             x=block(x)
-
-        x = x[:, self.prompt_num:, :]
 
         ######################
         # END OF YOUR CODE   #

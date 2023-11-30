@@ -92,8 +92,8 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
 
     # Load the datasets
     train_dataset, val_dataset = get_train_validation_set(data_dir=data_dir, augmentation_name=augmentation_name)
-    trainset = data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers = 0, drop_last=True)
-    valset = data.DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False, num_workers = 0, drop_last=False)
+    trainset = data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers = 2, drop_last=True)
+    valset = data.DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False, num_workers = 2, drop_last=False)
 
     # Initialize the optimizer (Adam) to train the last layer of the model.
     optimizer = torch.optim.Adam(model.fc.parameters(), lr=lr)
@@ -212,7 +212,7 @@ def main(lr, batch_size, epochs, data_dir, seed, augmentation_name, test_noise):
 
     # Evaluate the model on the test set
     test_dataset = get_test_set(data_dir=data_dir, test_noise=test_noise)
-    testset = data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers = 0, drop_last=False)
+    testset = data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers = 2, drop_last=False)
     accuracy = evaluate_model(model, data_loader=testset, device=device) 
     print('Test accuracy:', accuracy)
     #######################
@@ -237,7 +237,7 @@ if __name__ == '__main__':
                         help='Data directory where to store/find the CIFAR100 dataset.')
     parser.add_argument('--augmentation_name', default=None, type=str,
                         help='Augmentation to use.')
-    parser.add_argument('--test_noise', default=False, action="store_true",
+    parser.add_argument('--test_noise', default=True, action="store_true",
                         help='Whether to test the model on noisy images or not.')
 
     args = parser.parse_args()

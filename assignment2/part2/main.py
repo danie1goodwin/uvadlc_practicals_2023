@@ -26,7 +26,7 @@ def parse_option():
 
     parser.add_argument("--print_freq", type=int, default=50, help="print frequency")
     parser.add_argument("--save_freq", type=int, default=200, help="save frequency")
-    parser.add_argument("--batch_size", type=int, default=128, help="batch_size")
+    parser.add_argument("--batch_size", type=int, default=64, help="batch_size")
     parser.add_argument(
         "--num_workers", type=int, default=4, help="num of workers to use"
     )
@@ -47,12 +47,12 @@ def parse_option():
         "--warmup", type=int, default=1000, help="number of steps to warmup for"
     )
     parser.add_argument("--momentum", type=float, default=0.9, help="momentum")
-    parser.add_argument("--patience", type=int, default=6)
+    parser.add_argument("--patience", type=int, default=1000)
 
     # model
     parser.add_argument("--model", type=str, default="clip")
     parser.add_argument("--arch", type=str, default="ViT-B/32")
-    parser.add_argument("--prompt_type", type=str, choices=["visual_prompt", "deep_prompt"], default="visual_prompt") 
+    parser.add_argument("--prompt_type", type=str, choices=["visual_prompt", "deep_prompt"], default="deep_prompt") 
     parser.add_argument("--prompt_num", type=int, default=4, help="number of learnable deep prompts to use")
     parser.add_argument("--injection_layer", type=int, default=0, help="id of transformer layer to inject prompt into")
     parser.add_argument(

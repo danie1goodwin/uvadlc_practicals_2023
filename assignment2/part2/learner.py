@@ -23,7 +23,7 @@ import torch.nn.functional as F
 import numpy as np
 import random
 from clip import clip
-#from torch.cuda.amp import GradScaler
+from torch.cuda.amp import GradScaler
 import time
 
 
@@ -233,10 +233,9 @@ class Learner:
             # - Compute the loss (using self.criterion)
             # - Perform a backward pass
             # - Update the parameters
-            images, target = images.to(self.device), target.to(self.device).float()
-            self.clip.visualize_prompt('test')
+            images, target = images.to(self.device), target.to(self.device)
             self.optimizer.zero_grad()
-            similarities = self.clip(images).float()
+            similarities = self.clip(images)
             loss = self.criterion(similarities, target) 
             loss.backward()            
             self.optimizer.step()
@@ -298,8 +297,8 @@ class Learner:
                 # - Move the images/targets to the device
                 # - Forward pass (using self.clip)
                 # - Compute the loss (using self.criterion)
-                images, target = images.to(self.device), target.to(self.device).float()
-                similarities = self.clip.forward(images).float()
+                images, target = images.to(self.device), target.to(self.device)
+                similarities = self.clip.forward(images)
                 loss = self.criterion(similarities, target) 
                 #######################
                 # END OF YOUR CODE    #

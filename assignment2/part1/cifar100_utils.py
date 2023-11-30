@@ -42,6 +42,8 @@ class AddGaussianNoise(torch.nn.Module):
         z = self.mean + self.std*z
 
         img = img + z
+
+        return img
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -60,12 +62,13 @@ def add_augmentation(augmentation_name, transform_list):
     #######################
 
     # Create a new transformation based on the augmentation_name.
-    augmentation_function = getattr(transforms, augmentation_name)
-
+    if augmentation_name == 'RandomHorizontalFlip':
+        transform = transforms.RandomHorizontalFlip()
+    elif augmentation_name == 'test noise':
+        transform = AddGaussianNoise() 
 
     # Add the new transformation to the list.
-    transform_list.append(augmentation_function())
-
+    transform_list.append(transform)
     #######################
     # END OF YOUR CODE    #
     #######################
