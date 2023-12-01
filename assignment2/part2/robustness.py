@@ -24,7 +24,7 @@ from learner import Learner
 def parse_option():
     parser = argparse.ArgumentParser("Visual Prompting for CLIP")
 
-    parser.add_argument("--print_freq", type=int, default=10, help="print frequency")
+    parser.add_argument("--print_freq", type=int, default=200, help="print frequency")
     parser.add_argument("--save_freq", type=int, default=50, help="save frequency")
     parser.add_argument("--batch_size", type=int, default=128, help="batch_size")
     parser.add_argument(
@@ -78,7 +78,7 @@ def parse_option():
     parser.add_argument("--image_size", type=int, default=224, help="image size")
     parser.add_argument(
         "--test_noise",
-        default=False,
+        default=True,
         action="store_true",
         help="whether to add noise to the test images",
     )
@@ -88,7 +88,7 @@ def parse_option():
         action="store_true",
         help="visualize the (randomly initialized) prompt and save it to a file for debugging",
     )
-
+    
     # other
     parser.add_argument(
         "--seed", type=int, default=0, help="seed for initializing training"
@@ -104,6 +104,7 @@ def parse_option():
     parser.add_argument(
         "--resume", type=str, default=None, help="path to resume from checkpoint"
     )
+    parser.add_argument("--prompt_type", type=str, choices=["visual_prompt", "deep_prompt"], default="visual_prompt") 
     parser.add_argument(
         "--evaluate", default=False, action="store_true", help="evaluate model test set"
     )

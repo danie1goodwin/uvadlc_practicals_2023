@@ -130,8 +130,6 @@ def parse_option():
 
     if torch.cuda.is_available():
         args.device = 'cuda' 
-    elif torch.backends.mps.is_available:
-        args.device = "mps"  
     else:
         args.device = "cpu"
 

@@ -41,7 +41,7 @@ def parse_option():
 
     parser.add_argument("--batch_size", type=int, default=128, help="batch_size")
     parser.add_argument(
-        "--num_workers", type=int, default=16, help="num of workers to use"
+        "--num_workers", type=int, default=2, help="num of workers to use"
     )
 
     # model
@@ -55,27 +55,27 @@ def parse_option():
     parser.add_argument(
         "--dataset",
         type=str,
-        default="cifar10",
+        default="cifar100",
         help="dataset",
         choices=["cifar10", "cifar100"],
     )
     parser.add_argument(
         "--split",
         type=str,
-        default="train",
+        default="test",
         help="dataset splits: (train/test)",
         choices=["train", "test"],
     )
     parser.add_argument(
         "--test_noise",
-        default=False,
+        default=True,
         action="store_true",
         help="whether to add noise to the test images",
     )
 
     # input
     parser.add_argument(
-        "--prompt_template", type=str, default="This is a photo of a {}"
+        "--prompt_template", type=str, default="This is a photo of a {} object."
     )
     parser.add_argument(
         "--class_names",
@@ -96,11 +96,11 @@ def parse_option():
 
     args = parser.parse_args()
     if torch.backends.mps.is_available():
-        device = torch.device('mps')
+        args.device = torch.device('mps')
     elif torch.cuda.is_available():
-        device = torch.device('cuda')
+        args.device = torch.device('cuda')
     else:
-        device = torch.device('cpu') 
+        args.device = torch.device('cpu') 
     return args
 
 

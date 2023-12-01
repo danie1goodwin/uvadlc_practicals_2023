@@ -49,8 +49,8 @@ class DeepPromptCLIP(nn.Module):
         print("List of prompts:")
         pprint(prompts)
 
-        prompts = torch.cat([clip.tokenize(p) for p in prompts])
-        prompts = prompts.to(args.device)
+        #prompts = torch.cat([clip.tokenize(p) for p in prompts])
+        #prompts = prompts.to(args.device)
 
 
         #######################
@@ -65,9 +65,15 @@ class DeepPromptCLIP(nn.Module):
         # - Return a tensor of shape (num_prompts, 512).
 
         # remove this line once you implement the function
+        self.device = args.device
+        text_features = torch.zeros([len(prompts), 512]).to(self.device)
+
         with torch.no_grad():
-            prompt_features = clip_model.encode_text(prompts) 
-        text_features = prompt_features / prompt_features.norm(dim=-1, keepdim=True)
+            for i, prompt in enumerate(prompts):
+                prompt = clip_model.encode_text(clip.tokenize(prompt).to(args.device))
+                prompt_norm = prompt / prompt.norm(dim=-1)
+                text_features[i,:] = prompt_norm 
+        
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -87,7 +93,7 @@ class DeepPromptCLIP(nn.Module):
         # Hint: CLIP uses different datatypes for CPU (float32) and GPU (float16)
         # Hint: use args.prompt_num to specify the number of deep prompts to use
         self.prompt_num = args.prompt_num
-        self.deep_prompt = nn.Parameter(torch.randn([args.prompt_num, self.clip_model.visual.transformer.width], device = args.device, dtype = torch.float16), requires_grad=True)
+        self.deep_prompt = nn.Parameter(torch.randn([self.prompt_num, self.clip_model.visual.transformer.width], device = self.device, dtype = torch.float16), requires_grad=True)
         # remove this line once you implement the function
         
 
@@ -114,9 +120,9 @@ class DeepPromptCLIP(nn.Module):
 
         # remove this line once you implement the function
 
-        image_features = self.custom_encode_image(image)
+        image_features = self.custom_encode_image(image).to(self.device)
         image_features = image_features / image_features.norm(dim=-1, keepdim=True) 
-        similarity = image_features @ self.text_features.T 
+        similarity = image_features @ self.text_features.type(torch.float16).T 
         return similarity * self.logit_scale
 
         #######################
@@ -129,7 +135,7 @@ class DeepPromptCLIP(nn.Module):
 
         x = x.type(self.clip_model.dtype)
         image_encoder = self.clip_model.visual
-        print(image_encoder) 
+
         x = image_encoder.conv1(x)  # shape = [*, width, grid, grid]
         x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
@@ -154,10 +160,11 @@ class DeepPromptCLIP(nn.Module):
         # Hint: Beware of the batch size (the deep prompt is the same for all images in the batch).
 
         # remove this line once you implement the function
-        deep_prompt = self.deep_prompt.expand(x.shape[0], -1, -1)
+        deep_prompt = self.deep_prompt.expand(x.shape[1], -1, -1)
+        deep_prompt = deep_prompt.permute(1,0,2) 
         for i, block in enumerate(image_encoder.transformer.resblocks):
             if i==self.injection_layer:
-                x = torch.cat((x, deep_prompt), dim=1)
+                x = torch.cat((deep_prompt, x), dim=0)
             x=block(x)
 
         ######################

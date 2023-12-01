@@ -55,12 +55,12 @@ class Learner:
         PROMPT_TEMPLATE = args.text_prompt_template
 
         print("Building custom CLIP")
-        if args.prompt_type == "visual_prompt":
-            self.clip = VisualPromptCLIP(args, self.test_dataset, template=PROMPT_TEMPLATE)
-        elif args.prompt_type == "deep_prompt":
-            self.clip = DeepPromptCLIP(args, self.test_dataset, template=PROMPT_TEMPLATE)
-        else:
-            raise NotImplementedError(f"{args.prompt_type} is not supported :)!")
+        # if args.prompt_type == "visual_prompt":
+        #     self.clip = VisualPromptCLIP(args, self.test_dataset, template=PROMPT_TEMPLATE)
+        # elif args.prompt_type == "deep_prompt":
+        #     self.clip = DeepPromptCLIP(args, self.test_dataset, template=PROMPT_TEMPLATE)
+        # else:
+        #     raise NotImplementedError(f"{args.prompt_type} is not supported :)!")
 
         # Optionally resume from a checkpoint
         if self.args.resume:

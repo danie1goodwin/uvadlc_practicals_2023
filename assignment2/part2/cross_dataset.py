@@ -106,10 +106,10 @@ def parse_option():
     parser.add_argument("--filename", type=str, default=None, help="filename to save")
     parser.add_argument("--trial", type=int, default=1, help="number of trials")
     parser.add_argument(
-        "--resume", type=str, default=None, help="path to resume from checkpoint"
+        "--resume", type=str, default='\data\ViT-B-32.pt', help="path to resume from checkpoint"
     )
     parser.add_argument(
-        "--evaluate", default=False, action="store_true", help="evaluate model test set"
+        "--evaluate", default=True, action="store_true", help="evaluate model test set"
     )
     parser.add_argument("--gpu", type=int, default=None, help="gpu to use")
     parser.add_argument(
@@ -176,7 +176,7 @@ def main():
         #######################
         # TODO: Define `classnames` as a list of 10 + 100 class labels from CIFAR10 and CIFAR100
 
-        raise NotImplementedError
+        print(cifar10_test.classes)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -204,7 +204,13 @@ def main():
         # TODO: Compute the text features (for each of the prompts defined above) using CLIP
         # Note: This is similar to the code you wrote in `clipzs.py`
 
-        raise NotImplementedError
+        text_inputs = torch.cat([clip.tokenize(prompt) for prompt in prompts])
+        text_inputs = text_inputs.to(args.device)
+
+        with torch.no_grad():
+            text_features = clip_model.encode_text(text_inputs)
+
+        text_features /= text_features.norm(dim=-1, keepdim=True)
         #######################
         # END OF YOUR CODE    #
         #######################
