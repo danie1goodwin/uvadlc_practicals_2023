@@ -46,6 +46,7 @@ class VAE(pl.LightningModule):
         self.encoder = CNNEncoder(z_dim=z_dim, num_filters=num_filters)
         self.decoder = CNNDecoder(z_dim=z_dim, num_filters=num_filters)
 
+
     def forward(self, imgs):
         """
         The forward function calculates the VAE-loss for a given batch of images.
@@ -70,13 +71,17 @@ class VAE(pl.LightningModule):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        batch_size = imgs.shape[0]
         loss = nn.CrossEntropyLoss(reduction='sum')
         mean, log_std = self.encoder(imgs) 
-        z = sample_reparameterize(mean, torch.exp(log_std))
-        x_hat = self.decoder(z) 
-        L_rec = loss(x_hat, imgs) 
-        L_reg = KLD(z, log_std) 
-        bpd = elbo_to_bpd(L_rec + L_reg, imgs.shape) 
+        z = sample_reparameterize(mean, torch.exp(log_std)) 
+        imgs = imgs.squeeze(1) # [B, 28, 28]
+        x_hat = self.decoder(z) # [B, 16, 28, 28] 
+        L_rec = loss(x_hat, imgs)/batch_size # cross entropy loss across all images in batch 
+        L_reg = KLD(mean, log_std) # gives KL divergence for each latent vector coming from each image in batch
+        L_reg = torch.sum(L_reg)/batch_size
+        elbo = L_reg + L_rec
+        bpd = elbo_to_bpd(elbo, imgs.shape) 
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -94,7 +99,8 @@ class VAE(pl.LightningModule):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        x_samples = self.decoder.forward(torch.randn(batch_size, self.hparams.z_dim))
+        x_samples = self.decoder(torch.randn(batch_size, self.hparams.z_dim, device = self.decoder.device)) 
+        x_samples = torch.argmax(x_samples, dim=1, keepdim=True)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -227,7 +233,7 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # Model hyperparameters
-    parser.add_argument('--z_dim', default=20, type=int,
+    parser.add_argument('--z_dim', default=2, type=int,
                         help='Dimensionality of latent space')
     parser.add_argument('--num_filters', default=32, type=int,
                         help='Number of channels/filters to use in the CNN encoder/decoder.')

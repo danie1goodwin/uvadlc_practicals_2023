@@ -77,8 +77,7 @@ def elbo_to_bpd(elbo, img_shape):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    nll = torch.mean(elbo)
-    bpd = nll * torch.log2(torch.exp(torch.tensor(1.0))) / torch.prod(torch.tensor(img_shape[1:]))
+    bpd = elbo * torch.log2(torch.exp(torch.tensor(1.0))) / torch.prod(torch.tensor(img_shape[1:]))
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -109,8 +108,15 @@ def visualize_manifold(decoder, grid_size=20):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    img_grid = None
-    raise NotImplementedError
+    pcts = torch.linspace(0.5/grid_size, (grid_size-.5)/grid_size, grid_size)
+    grid_x, grid_y = torch.meshgrid(pcts, pcts)
+    grid_points = torch.stack([grid_x, grid_y], dim=-1)
+    z_vals = torch.distributions.normal.Normal(torch.zeros(2), torch.ones(2)).icdf(grid_points) 
+    z_vals = z_vals.flatten(0,1) 
+    imgs = decoder(z_vals)
+    imgs = torch.softmax(imgs, dim=1)
+    img_grid = make_grid(imgs, nrow=grid_size, normalize=True)
+    img_grid = img_grid.float()/15
     #######################
     # END OF YOUR CODE    #
     #######################
