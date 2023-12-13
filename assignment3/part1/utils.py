@@ -108,15 +108,19 @@ def visualize_manifold(decoder, grid_size=20):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    pcts = torch.linspace(0.5/grid_size, (grid_size-.5)/grid_size, grid_size)
-    grid_x, grid_y = torch.meshgrid(pcts, pcts)
-    grid_points = torch.stack([grid_x, grid_y], dim=-1)
-    z_vals = torch.distributions.normal.Normal(torch.zeros(2), torch.ones(2)).icdf(grid_points) 
-    z_vals = z_vals.flatten(0,1) 
-    imgs = decoder(z_vals)
-    imgs = torch.softmax(imgs, dim=1)
-    img_grid = make_grid(imgs, nrow=grid_size, normalize=True)
+    pcts = torch.linspace(0.5/grid_size, (grid_size-.5)/grid_size, grid_size) #(grid_size)
+    grid_x, grid_y = torch.meshgrid(pcts, pcts) # (grid_size,grid_size)
+    grid_points = torch.stack([grid_x, grid_y], dim=-1) # (grid_size,grid_size,z_dim)
+    z_vals = torch.distributions.normal.Normal(torch.zeros(2), torch.ones(2)).icdf(grid_points) # (grid_size,grid_size,z_dim)
+    z_vals = z_vals.flatten(0,1) # (grid_size**2,z_dim)
+    imgs = decoder(z_vals) # (grid_size**2,16,28,28) 
+    imgs = torch.nn.functional.softmax(imgs, dim=1) # (grid_size**2,16,28,28)
+    print(imgs.shape) 
+    img_grid = make_grid(imgs, nrow=grid_size) 
     img_grid = img_grid.float()/15
+    print('Shape of manifold grid') 
+    print(img_grid.shape)
+    print(img_grid.dtype)
     #######################
     # END OF YOUR CODE    #
     #######################

@@ -77,9 +77,8 @@ class VAE(pl.LightningModule):
         z = sample_reparameterize(mean, torch.exp(log_std)) 
         imgs = imgs.squeeze(1) # [B, 28, 28]
         x_hat = self.decoder(z) # [B, 16, 28, 28] 
-        L_rec = loss(x_hat, imgs)/batch_size # cross entropy loss across all images in batch 
-        L_reg = KLD(mean, log_std) # gives KL divergence for each latent vector coming from each image in batch
-        L_reg = torch.sum(L_reg)/batch_size
+        L_rec = loss(x_hat, imgs)/batch_size
+        L_reg = KLD(mean, log_std).mean() 
         elbo = L_reg + L_rec
         bpd = elbo_to_bpd(elbo, imgs.shape) 
         #######################
