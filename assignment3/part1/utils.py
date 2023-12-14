@@ -114,13 +114,9 @@ def visualize_manifold(decoder, grid_size=20):
     z_vals = torch.distributions.normal.Normal(torch.zeros(2), torch.ones(2)).icdf(grid_points) # (grid_size,grid_size,z_dim)
     z_vals = z_vals.flatten(0,1) # (grid_size**2,z_dim)
     imgs = decoder(z_vals) # (grid_size**2,16,28,28) 
-    imgs = torch.nn.functional.softmax(imgs, dim=1) # (grid_size**2,16,28,28)
-    print(imgs.shape) 
-    img_grid = make_grid(imgs, nrow=grid_size) 
-    img_grid = img_grid.float()/15
-    print('Shape of manifold grid') 
-    print(img_grid.shape)
-    print(img_grid.dtype)
+    imgs = torch.nn.functional.softmax(imgs, dim=1) # (grid_size**2,16,28,28) 
+    imgs = imgs.argmax(dim=1, keepdim=True) # (grid_size**2,1,28,28)
+    img_grid = make_grid(tensor = imgs.float(), nrow=grid_size) 
     #######################
     # END OF YOUR CODE    #
     #######################

@@ -246,7 +246,7 @@ if __name__ == '__main__':
     # Other hyperparameters
     parser.add_argument('--data_dir', default='../data/', type=str,
                         help='Directory where to look for the data. For jobs on Lisa, this should be $TMPDIR.')
-    parser.add_argument('--epochs', default=80, type=int,
+    parser.add_argument('--epochs', default=10, type=int,
                         help='Max number of epochs')
     parser.add_argument('--seed', default=42, type=int,
                         help='Seed to use for reproducing results')
@@ -255,7 +255,7 @@ if __name__ == '__main__':
                              'For your assignment report, you can use multiple workers (e.g. 4) and do not have to set it to 0.')
     parser.add_argument('--log_dir', default='VAE_logs', type=str,
                         help='Directory where the PyTorch Lightning logs should be created.')
-    parser.add_argument('--progress_bar', action='store_true',
+    parser.add_argument('--progress_bar', action='store_true', default=True,
                         help=('Use a progress bar indicator for interactive experimentation. '
                               'Not to be used in conjuction with SLURM jobs'))
 

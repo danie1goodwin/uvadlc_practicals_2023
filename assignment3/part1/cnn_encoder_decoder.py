@@ -65,7 +65,6 @@ class CNNDecoder(nn.Module):
         x = self.linear(z) # (B, z_dim) --> (B, 2*16*c_hid)
         x = x.reshape(z.shape[0], -1, 4, 4) # (B, 2*16*c_hid) --> (B, 2*c_hid, 4, 4)
         x = self.net(x) # (B, 2*c_hid, 4, 4) --> (B, num_input_channels, 28, 28)
-        print(x.shape)
         return x
 
     @property
