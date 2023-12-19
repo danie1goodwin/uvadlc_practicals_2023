@@ -43,6 +43,7 @@ def generate_and_save(model, epoch, summary_writer, batch_size=64):
         batch_size - Number of images to generate/sample
     """
     samples = model.sample(batch_size)
+    #samples = samples.float()
     grid = make_grid(samples, nrow=8, normalize=True,
                      value_range=(-1, 1), pad_value=0.5)
     grid = grid.detach().cpu()
@@ -223,7 +224,7 @@ if __name__ == '__main__':
                         help='Dimensionality of latent code space')
 
     # Optimizer hyper-parameters
-    parser.add_argument('--batch_size', default=64, type=int,
+    parser.add_argument('--batch_size', default=128, type=int,
                         help='Batch size to use for training')
     parser.add_argument('--lambda_', type=float, default=0.995,
                         help='Reconstruction and adversarial mixing coefficient')

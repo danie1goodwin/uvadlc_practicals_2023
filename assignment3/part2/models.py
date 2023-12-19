@@ -34,7 +34,6 @@ class ConvEncoder(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         c_hid = 32
         num_input_channels = 1
         act_fn = nn.ReLU
@@ -53,7 +52,6 @@ class ConvEncoder(nn.Module):
             nn.Flatten(), # [B,64,4,4] -> [B, 64*4*4]
             nn.Linear(2*16*c_hid, z_dim) # [B, 64*4*4] -> [B, z_dim]
         )
-        self.net.to(device=device)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -68,10 +66,7 @@ class ConvEncoder(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        x = x.to(device=device)
         z = self.net(x)
-        return z
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -101,7 +96,6 @@ class ConvDecoder(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         c_hid = 32
         num_input_channels = 1
         act_fn = nn.ReLU
@@ -122,9 +116,6 @@ class ConvDecoder(nn.Module):
             nn.ConvTranspose2d(c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=3, stride=2),
             nn.Tanh() 
         )
-
-        self.linear.to(device=device)
-        self.net.to(device=device)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -139,8 +130,6 @@ class ConvDecoder(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        z = z.to(device=device)
         recon_x = self.linear(z)
         recon_x = recon_x.reshape(z.shape[0], -1, 4, 4)
         recon_x = self.net(recon_x)
@@ -164,7 +153,6 @@ class Discriminator(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.net = nn.Sequential(
             nn.Linear(z_dim, 512),
             nn.LeakyReLU(0.2),
@@ -172,7 +160,6 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2),
             nn.Linear(512, 1)
         )
-        self.net.to(device=device)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -188,8 +175,6 @@ class Discriminator(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        z = z.to(device=device)
         preds = self.net(z)
         #######################
         # END OF YOUR CODE    #
@@ -212,7 +197,6 @@ class AdversarialAE(nn.Module):
               z_dim - Dimensionality of the latent code space. This is the number of neurons of the code layer
         """
         super(AdversarialAE, self).__init__()
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.z_dim = z_dim
         self.encoder = ConvEncoder(z_dim)
         self.decoder = ConvDecoder(z_dim)
@@ -229,8 +213,6 @@ class AdversarialAE(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        x = x.to(device=device)
         z = self.encoder(x)
         recon_x = self.decoder(z)
         #######################
@@ -255,15 +237,9 @@ class AdversarialAE(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        x = x.to(device=device)
-        recon_x = recon_x.to(device=device)
-        z_fake = z_fake.to(device=device)
-
         recon_loss = F.mse_loss(x, recon_x)
-        gen_loss = torch.log(torch.sigmoid(self.discriminator(z_fake))).mean()
+        gen_loss = -torch.log(1-torch.sigmoid(self.discriminator(z_fake))).mean()
         ae_loss = (1-lambda_)*gen_loss+lambda_*recon_loss
-        ae_loss = ae_loss.mean() 
         logging_dict = {"gen_loss": gen_loss,
                         "recon_loss": recon_loss,
                         "ae_loss": ae_loss}
@@ -288,18 +264,16 @@ class AdversarialAE(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        z_fake = z_fake.to(device=device) 
-        z_real = torch.randn_like(z_fake, device=device)
-        real = torch.ones((z_fake.shape[0], 1), device=device)
-        fake = torch.zeros((z_fake.shape[0], 1), device=device)
+        z_real = torch.randn_like(z_fake, device=self.device)
+        real_preds = self.discriminator(z_real)
+        fake_preds = self.discriminator(z_fake)
+        real = torch.ones((z_fake.shape[0], 1), device=self.device)
+        fake = torch.zeros((z_fake.shape[0], 1), device=self.device)
 
-        bce_loss = nn.BCELoss()
-
-        loss_real = bce_loss(torch.sigmoid(self.discriminator(z_real)), real)
-        loss_fake = bce_loss(torch.sigmoid(self.discriminator(z_fake)), fake)
+        loss_real = F.binary_cross_entropy_with_logits(real_preds, real)
+        loss_fake = F.binary_cross_entropy_with_logits(fake_preds, fake)
         disc_loss = (loss_real+loss_fake)*.5
-        accuracy = (torch.sum(torch.sigmoid(self.discriminator(z_real)) > 0)+torch.sum(torch.sigmoid(self.discriminator(z_fake)) < 0))/(2*z_fake.shape[0]) 
+        accuracy = ((real_preds > 0).sum()+(fake_preds < 0).sum())/(2*z_fake.shape[0]) 
 
         logging_dict = {"disc_loss": disc_loss,
                         "loss_real": loss_real,
@@ -323,10 +297,9 @@ class AdversarialAE(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        z = torch.randn(batch_size, self.z_dim, device=device)
+        z = torch.randn(batch_size, self.z_dim, device=self.device)
         x = self.decoder(z)
-        x = torch.argmax(x, dim=1, keepdim=True)
+        #x = torch.argmax(x, dim=1, keepdim=True)
         #######################
         # END OF YOUR CODE    #
         #######################
